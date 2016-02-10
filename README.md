@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # MIDI_Display.pde
 
 MIDI_Display is a visualizer for MIDI input. The program was written for Processing 3.
@@ -23,3 +24,7 @@ GPL3
 ## Author
 
 Tenell Rhodes, February 2016
+=======
+# MIDI_Display
+A visualizer for MIDI devices in Processing 3
+>>>>>>> 9f736cfa5a2111b5f2d33ef8eb7767888f91fe01
