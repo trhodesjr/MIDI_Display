@@ -4,8 +4,8 @@ import java.util.Map;
 
 MidiBus keyboard;
 HashMap<Integer, Integer> MidiKeys = new HashMap<Integer, Integer>();
-int midi_note, midi_press, current_beat, beats, note, beat, indicator_position, increment, begin_draw, reset_count;
-float frame_rate, width_border, height_border, vertical_spacing, horizontal_spacing, side_length, radius, frame_multipler;
+int midi_note, midi_press, current_beat, last_beat, beats, note, draw_beat, indicator_position, increment, start_beat, end_beat, reset_count;
+float frame_rate, page_width_border, page_height_border, vertical_spacing, horizontal_spacing, rect_width, rect_height, radius, frame_multiplier;
 float beatbox_x, beatbox_y, indicator_x, indicator_y, indicator_w, indicator_h;
 color beat_color_on, beat_color_off, background_color, beat_indicator_color;
 boolean record_flag, reset_flag, clear_flag;
@@ -13,88 +13,100 @@ boolean [][] beat_boxes;
 
 /*********** Configuration Parameters **************/
 int midi_device = 0;  // default for Oxygen8
-int desiredBPM = 90;  // set beat per minute rate
+int desiredBPM = 140;  // set beat per minute rate
 int midi_inputs = 15;  // 15 piano keys (15 rows)
 int measures = 2;      // # of measures
-int beat_length = 16;  // 16th notes
-int screen = 1;        // display sketch on this screen
+int beat_length = 16;  // 8th or 16th notes
+int screen = 2;        // display sketch on this screen
 
 void setup() {
   fullScreen(screen);  // The size() and fullScreen() methods cannot both be used in the same program, just choose one. 
   //size(960, 540);
   init();
   background(background_color);
-  frameRate(frame_rate*frame_multipler);
+  frameRate(frame_rate*frame_multiplier);
   MidiBus.list();
   keyboard = new MidiBus(this, midi_device, 0);
   reset();
-  println(frame_rate*frame_multipler);
+  println(frame_rate*frame_multiplier);
 }  // end setup()
 
 void draw() {
-  // println(frameRate);
+  println(frameRate);
   increment++;
-  indicator_position = increment%(int)frame_multipler;
+  indicator_position = increment%(int)frame_multiplier;
   if (reset_flag) reset();
   else if (record_flag) {
     eraseBeatIndicator();
-    if (indicator_position==0) current_beat = (current_beat+1)%beats; // increment beat count    
+    if (indicator_position==0) {
+      current_beat = (current_beat+1)%beats;
+    } // increment beat count    
     record();
     drawBeatIndicator(indicator_position);
   }  // end else if
 }  // end draw()
 
 void record() {
-  if (current_beat == 0) begin_draw = 0;
-  else begin_draw = (current_beat-1);
-  for (beat = begin_draw; beat <= current_beat; beat++) {    // only draws the current and previous column
-    beatbox_x = width_border+beat*(side_length+horizontal_spacing)+side_length/2;
+  if (current_beat > (beats-2)) {
+    start_beat = beats-2;
+    end_beat = start_beat+1;
+  } else if (indicator_position == 0) {
+    start_beat = last_beat;
+  } else {
+    start_beat = current_beat;
+  }
+
+  end_beat = start_beat+1;
+  eraseBeat(start_beat);  
+  eraseBeat(end_beat);
+  for (draw_beat = start_beat; draw_beat <= end_beat; draw_beat++) {    // only draws the current and previous column
+    beatbox_x = page_width_border+draw_beat*(rect_width+horizontal_spacing);
     for (note = 0; note < midi_inputs; note++) {    
-      beatbox_y = height_border+note*(side_length+vertical_spacing)+side_length/2;
-      if (beat_boxes[note][beat]) {
+      beatbox_y = page_height_border+note*(rect_height+vertical_spacing);
+      if (beat_boxes[note][draw_beat]) {
         fill(beat_color_on);
       }         // if beat box on, set fill to on color
       else fill(beat_color_off);                               // else, set fill to off color     
-      ellipse(beatbox_x, beatbox_y, side_length, side_length);    // draw beat boxes as circles
+      rect(beatbox_x, beatbox_y, rect_width, rect_height, radius);    // draw beat boxes as rectangles
     }  // end for
   }  // end for
+  last_beat = start_beat;
 }
 
 void drawBeatIndicator(int position) {
-  indicator_x = (width_border+current_beat*(side_length+horizontal_spacing)-1)+((side_length+horizontal_spacing)*(position/frame_multipler));
-  indicator_y = height_border-2;
-  indicator_w = side_length+2;
-  indicator_h = height-(2*height_border)+4;
+  indicator_x = (page_width_border+current_beat*(rect_width+horizontal_spacing)-1)+((rect_width+horizontal_spacing)*(position/frame_multiplier));
+  indicator_y = page_height_border-2;
+  indicator_w = rect_width+2;
+  indicator_h = height-(2*page_height_border)+4;
+  noStroke(); 
   fill(beat_indicator_color);
   rect(indicator_x, indicator_y, indicator_w, indicator_h, radius);
 }  // end updateBeatIndicator()
 
 void eraseBeatIndicator() {
-  fill(0);
+  noStroke(); 
+  fill(background_color);
   rect(indicator_x, indicator_y, indicator_w, indicator_h, radius);
 }
 
 void reset() {
   clearScreen();
-  if (record_flag && reset_flag)
+  if (record_flag && reset_flag) {
     current_beat = indicator_position = increment = 0;
-
-  else if (clear_flag && (reset_count == 2)) {
+  } else if (clear_flag && (reset_count == 2)) {
     current_beat = indicator_position = increment = 0;
     clearBeatBoxes();
     reset_count = 0;
   }
-
   for (note = 0; note < midi_inputs; note++) {
-    for (beat = 0; beat < beats; beat++) {
-      if (beat_boxes[note][beat]) {
+    for (draw_beat = 0; draw_beat < beats; draw_beat++) {
+      if (beat_boxes[note][draw_beat]) {
         fill(beat_color_on);
       }         // if beat box on, set fill to on color
       else fill(beat_color_off);                               // else, set fill to off color
-      ellipse(width_border+beat*(side_length+horizontal_spacing)+side_length/2, height_border+note*(side_length+vertical_spacing)+side_length/2, side_length, side_length);    // draw beat boxes as circles
+      rect(page_width_border+draw_beat*(rect_width+horizontal_spacing), page_height_border+note*(rect_height+vertical_spacing), rect_width, rect_height, radius);    // draw beat boxes as rectangles
     }  // end for
   }  // end for
-
   drawBeatIndicator(indicator_position);
   reset_flag = false;
 }
@@ -110,12 +122,12 @@ void midiMessage(MidiMessage message) {
           beat_boxes[MidiKeys.get(midi_note)][current_beat] = true;
       }  // end if
       switch(midi_note) {
-      case 49:  // C3 Sharp       
+      case 49:  // C3 Sharp for Record
         record_flag = reset_flag = true;
         clear_flag = false;
         reset_count = 0;
         break;
-      case 54:  // F3 Sharp
+      case 54:  // F3 Sharp for Reset
         ++reset_count;
         record_flag = false;
         reset_flag = clear_flag = true;        
@@ -130,7 +142,7 @@ void midiMessage(MidiMessage message) {
 void init() {
   beats = measures * beat_length;  // # of beats displayed
   frame_rate = bpmToFrameRate(desiredBPM);
-  beat = note = 0;
+  draw_beat = note = 0;
   beat_boxes = new boolean[midi_inputs][beats];
 
   // Put piano key-index position pairs in the HashMap
@@ -150,17 +162,18 @@ void init() {
   MidiKeys.put(71, 1);   
   MidiKeys.put(72, 0);  // C5
 
-  width_border = height_border = 3;
-  horizontal_spacing = floor(0.07*((width-(2*width_border))/((float)beats)));  // minimum horizontal spacing
-  side_length = (width-(2*width_border)-((beats-1)*horizontal_spacing))/((float)beats);
-  vertical_spacing = (height-(2*height_border)-(midi_inputs*side_length))/(midi_inputs-1);
-  radius = 0;
+  page_width_border = page_height_border = 3;
+  horizontal_spacing = floor(0.1*((width-(2*page_width_border))/((float)beats)));  // minimum horizontal spacing
+  vertical_spacing = floor(0.1*((height-(2*page_height_border))/((float)midi_inputs)));  // minimum horizontal spacing
+  rect_width = (width-(2*page_width_border)-((beats-1)*horizontal_spacing))/((float)beats);
+  rect_height = (height-(2*page_height_border)-((midi_inputs-1)*vertical_spacing))/((float)midi_inputs);
+  radius = 5;
   beat_color_on = color(0, 129, 196);
   beat_color_off = color(10);
-  beat_indicator_color = color(50, 0, 0, 255);
+  beat_indicator_color = color(255, 0, 0, 50);
   background_color = color(0);
-  current_beat = indicator_position = increment = reset_count = 0;
-  frame_multipler = 5;  // do not exceed
+  current_beat = last_beat = indicator_position = increment = reset_count = 0;
+  frame_multiplier = 10;  // do not exceed
   reset_flag = record_flag = clear_flag = false;
 
   clearBeatBoxes();
@@ -178,10 +191,13 @@ void clearBeatBoxes() {
   }
 }
 
-void clearScreen() {
-  stroke(background_color); 
+void eraseBeat(int beat) {
   fill(background_color);
-  rect(0, 0, width, height);
+  rect(page_width_border+beat*(rect_width+horizontal_spacing)-1, page_height_border-2, rect_width+2, height-(2*page_height_border)+4, radius);    // draw beat boxes as rectangles
+}
+
+void clearScreen() {
+  background(background_color);
 }
 
 int mod(int a, int m) {
