@@ -18,6 +18,7 @@ int midi_inputs = 15;  // 15 piano keys (15 rows)
 int measures = 2;      // # of measures
 int beat_length = 16;  // 8th or 16th notes
 int screen = 2;        // display sketch on this screen
+boolean enableKeyboard = false;  // for troubleshooting
 
 void setup() {
   //fullScreen(screen);  // The size() and fullScreen() methods cannot both be used in the same program, just choose one. 
@@ -28,6 +29,7 @@ void setup() {
   MidiBus.list();
   keyboard = new MidiBus(this, midi_device, 0);
   reset();
+  if(enableKeyboard) record_flag = true;
   println(frame_rate*frame_multiplier);
 }  // end setup()
 
@@ -174,12 +176,94 @@ void init() {
   current_beat = last_beat = indicator_position = increment = reset_count = 0;
   frame_multiplier = 10;  // do not exceed
   reset_flag = record_flag = clear_flag = false;
-
+  
   clearBeatBoxes();
 }
 
 float bpmToFrameRate(int bpm) {  
   return 1/(4/(beat_length*(bpm/60.0)));  // assumes 4/4 signature
+}
+
+void keyPressed() {
+  if (enableKeyboard) {
+    switch(keyCode) {
+    case 'A':
+    case 'a':
+      beat_boxes[14][current_beat] = true;
+      break;
+    case 'S':
+    case 's':
+      beat_boxes[13][current_beat] = true;
+      break;
+
+    case 'D':
+    case 'd':
+      beat_boxes[12][current_beat] = true;
+      break;
+
+    case 'F':
+    case 'f':
+      beat_boxes[11][current_beat] = true;
+      break;
+
+    case 'G':
+    case 'g':
+      beat_boxes[10][current_beat] = true;
+      break;
+    case 'H':
+    case 'h':
+      beat_boxes[9][current_beat] = true;
+      break;
+
+    case 'J':
+    case 'j':
+      beat_boxes[8][current_beat] = true;
+      break;
+
+    case 'K':
+    case 'k':
+      beat_boxes[7][current_beat] = true;
+      break;
+    case 'Z':
+    case 'z':
+      beat_boxes[6][current_beat] = true;
+      break;
+    case 'X':
+    case 'x':
+      beat_boxes[5][current_beat] = true;
+      break;
+
+    case 'C':
+    case 'c':
+      beat_boxes[4][current_beat] = true;
+      break;
+
+    case 'V':
+    case 'v':
+      beat_boxes[3][current_beat] = true;
+      break;
+    case 'B':
+    case 'b':
+      beat_boxes[2][current_beat] = true;
+      break;
+
+    case 'N':
+    case 'n':
+      beat_boxes[1][current_beat] = true;
+      break;
+
+    case 'M':
+    case 'm':
+      beat_boxes[0][current_beat] = true;
+      break;
+
+    case 'R':
+    case 'r':
+      clearBeatBoxes();
+      reset();
+      break;
+    }
+  }
 }
 
 void clearBeatBoxes() {
