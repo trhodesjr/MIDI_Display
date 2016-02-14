@@ -20,8 +20,8 @@ int beat_length = 16;  // 8th or 16th notes
 int screen = 2;        // display sketch on this screen
 
 void setup() {
-  fullScreen(screen);  // The size() and fullScreen() methods cannot both be used in the same program, just choose one. 
-  //size(960, 540);
+  //fullScreen(screen);  // The size() and fullScreen() methods cannot both be used in the same program, just choose one. 
+  size(960, 540);
   init();
   background(background_color);
   frameRate(frame_rate*frame_multiplier);
@@ -32,7 +32,6 @@ void setup() {
 }  // end setup()
 
 void draw() {
-  println(frameRate);
   increment++;
   indicator_position = increment%(int)frame_multiplier;
   if (reset_flag) reset();
