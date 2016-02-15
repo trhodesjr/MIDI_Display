@@ -13,7 +13,7 @@ boolean [][] beat_boxes;
 
 /*********** Configuration Parameters **************/
 int midi_device = 0;  // default for Oxygen8
-int desiredBPM = 140;  // set beat per minute rate
+int desiredBPM = 90;  // set beat per minute rate
 int midi_inputs = 15;  // 15 piano keys (15 rows)
 int measures = 2;      // # of measures
 int beat_length = 16;  // 8th or 16th notes
@@ -21,8 +21,8 @@ int screen = 2;        // display sketch on this screen
 boolean enableKeyboard = false;  // for troubleshooting
 
 void setup() {
-  //fullScreen(screen);  // The size() and fullScreen() methods cannot both be used in the same program, just choose one. 
-  size(960, 540);
+  fullScreen(screen);  // The size() and fullScreen() methods cannot both be used in the same program, just choose one. 
+  //size(960, 540);
   init();
   background(background_color);
   frameRate(frame_rate*frame_multiplier);
