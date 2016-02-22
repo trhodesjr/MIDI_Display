@@ -1,7 +1,9 @@
 import themidibus.*;
+import oscP5.*;
 import javax.sound.midi.MidiMessage; 
 import java.util.Map;
 
+OscP5 oscP5;
 MidiBus keyboard;
 HashMap<Integer, Integer> MidiKeys = new HashMap<Integer, Integer>();
 int midi_note, midi_press, current_beat, last_beat, beats, note, draw_beat, indicator_position, increment, start_beat, end_beat, reset_count;
@@ -16,7 +18,7 @@ int midi_device = 0;  // default for Oxygen8
 int desiredBPM = 90;  // set beat per minute rate
 int midi_inputs = 15;  // 15 piano keys (15 rows)
 int measures = 2;      // # of measures
-int beat_length = 16;  // 8th or 16th notes
+int beat_length = 8;  // 8th or 16th notes
 int screen = 2;        // display sketch on this screen
 boolean enableKeyboard = false;  // for troubleshooting
 
@@ -29,8 +31,9 @@ void setup() {
   MidiBus.list();
   keyboard = new MidiBus(this, midi_device, 0);
   reset();
-  if(enableKeyboard) record_flag = true;
+  if (enableKeyboard) record_flag = true;
   println(frame_rate*frame_multiplier);
+  oscP5 = new OscP5(this, 12345);
 }  // end setup()
 
 void draw() {
@@ -140,6 +143,22 @@ void midiMessage(MidiMessage message) {
   }  // end if
 }  // end midiMessage()
 
+/* incoming osc message are forwarded to the oscEvent method. */
+void oscEvent(OscMessage message) {
+  if (message.getBytes().length > 2) {                            // if valid data
+    midi_note = message.get(1).intValue();
+    midi_press = message.get(2).intValue();
+    println(midi_note);
+    println(midi_press);
+    if (midi_press > 0) {                                           // if an "on" note
+      if (MidiKeys.containsKey(midi_note)) {                        // if valid key pressed
+        if (record_flag)
+          beat_boxes[MidiKeys.get(midi_note)][current_beat] = true;
+      }  // end if
+    }  // end if
+  }  // end if
+}
+
 void init() {
   beats = measures * beat_length;  // # of beats displayed
   frame_rate = bpmToFrameRate(desiredBPM);
@@ -169,14 +188,14 @@ void init() {
   rect_width = (width-(2*page_width_border)-((beats-1)*horizontal_spacing))/((float)beats);
   rect_height = (height-(2*page_height_border)-((midi_inputs-1)*vertical_spacing))/((float)midi_inputs);
   radius = 5;
-  beat_color_on = color(0, 129, 196);
+  beat_color_on = color(0, 116, 182);
   beat_color_off = color(10);
   beat_indicator_color = color(255, 0, 0, 50);
   background_color = color(0);
   current_beat = last_beat = indicator_position = increment = reset_count = 0;
   frame_multiplier = 10;  // do not exceed
   reset_flag = record_flag = clear_flag = false;
-  
+
   clearBeatBoxes();
 }
 
@@ -185,7 +204,15 @@ float bpmToFrameRate(int bpm) {
 }
 
 void keyPressed() {
-  if (enableKeyboard) {
+  if (keyCode == 32) { // ASCII spacebar for Record
+    record_flag = reset_flag = true;
+    clear_flag = false;
+    reset_count = 0;
+  } else if ((keyCode == 'r')||(keyCode == 'R')) {  // ASCII r or R for Reset
+    ++reset_count;
+    record_flag = false;
+    reset_flag = clear_flag = true;
+  } else if (enableKeyboard) {
     switch(keyCode) {
     case 'A':
     case 'a':
@@ -261,6 +288,9 @@ void keyPressed() {
     case 'r':
       clearBeatBoxes();
       reset();
+      break;
+
+    default: // invalid key
       break;
     }
   }
