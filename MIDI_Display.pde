@@ -1,9 +1,7 @@
 import themidibus.*;
-import oscP5.*;
 import javax.sound.midi.MidiMessage; 
 import java.util.Map;
 
-OscP5 oscP5;
 MidiBus keyboard;
 HashMap<Integer, Integer> MidiKeys = new HashMap<Integer, Integer>();
 int midi_note, midi_press, current_beat, last_beat, beats, note, draw_beat, indicator_position, increment, start_beat, end_beat, reset_count;
@@ -21,6 +19,7 @@ int measures = 2;      // # of measures
 int beat_length = 8;  // 8th or 16th notes
 int screen = 2;        // display sketch on this screen
 boolean enableKeyboard = false;  // for troubleshooting
+boolean newest_notes = false; // only newest notes will be shown 
 
 void setup() {
   fullScreen(screen);  // The size() and fullScreen() methods cannot both be used in the same program, just choose one. 
@@ -33,7 +32,6 @@ void setup() {
   reset();
   if (enableKeyboard) record_flag = true;
   println(frame_rate*frame_multiplier);
-  oscP5 = new OscP5(this, 12345);
 }  // end setup()
 
 void draw() {
@@ -75,7 +73,7 @@ void record() {
     }  // end for
   }  // end for
   last_beat = start_beat;
-}
+}  // end record
 
 void drawBeatIndicator(int position) {
   indicator_x = (page_width_border+current_beat*(rect_width+horizontal_spacing)-1)+((rect_width+horizontal_spacing)*(position/frame_multiplier));
@@ -122,42 +120,15 @@ void midiMessage(MidiMessage message) {
 
     if (midi_press > 0) {                                           // if an "on" note
       if (MidiKeys.containsKey(midi_note)) {                        // if valid key pressed
-        if (record_flag)
+        if (record_flag) {
+          if (newest_notes)
+            removeBeat(current_beat);  // only the newest pressed note will be shown
           beat_boxes[MidiKeys.get(midi_note)][current_beat] = true;
+        }  // end if
       }  // end if
-      switch(midi_note) {
-      case 49:  // C3 Sharp for Record
-        record_flag = reset_flag = true;
-        clear_flag = false;
-        reset_count = 0;
-        break;
-      case 54:  // F3 Sharp for Reset
-        ++reset_count;
-        record_flag = false;
-        reset_flag = clear_flag = true;        
-        break;
-      default:  // invalid key
-        break;
-      }  // end switch
     }  // end if
   }  // end if
 }  // end midiMessage()
-
-/* incoming osc message are forwarded to the oscEvent method. */
-void oscEvent(OscMessage message) {
-  if (message.getBytes().length > 2) {                            // if valid data
-    midi_note = message.get(1).intValue();
-    midi_press = message.get(2).intValue();
-    println(midi_note);
-    println(midi_press);
-    if (midi_press > 0) {                                           // if an "on" note
-      if (MidiKeys.containsKey(midi_note)) {                        // if valid key pressed
-        if (record_flag)
-          beat_boxes[MidiKeys.get(midi_note)][current_beat] = true;
-      }  // end if
-    }  // end if
-  }  // end if
-}
 
 void init() {
   beats = measures * beat_length;  // # of beats displayed
@@ -307,6 +278,11 @@ void clearBeatBoxes() {
 void eraseBeat(int beat) {
   fill(background_color);
   rect(page_width_border+beat*(rect_width+horizontal_spacing)-1, page_height_border-2, rect_width+2, height-(2*page_height_border)+4, radius);    // draw beat boxes as rectangles
+}
+
+void removeBeat(int beat) {
+  for (int input = 0; input < midi_inputs; input++)
+    beat_boxes[input][beat] = false;
 }
 
 void clearScreen() {
