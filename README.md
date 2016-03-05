@@ -12,8 +12,8 @@ A visualizer for MIDI output devices in Processing 3.
 	-	The first time you run MIDI_display with your MIDI device connected, check the console to make sure the index number next to your device's name matches the value of the 'midi_device' variable under "Configuration Parameters". 
 	-	Changing the 'desiredBPM' will change the rate at which the timing indicator will move. If you wish to exceed 140 bpm, lower the 'frame_multipler' down to 1. This will ensure the indicator will continue to move across the screen at the correct rate. If not, the indicator will move at a slower rate than the desired BPM due to limitations in the rate at which the draw() function can be called and the number objects that to be redrawn.
 	-	The program only supports MIDI input from the white keys (C3 to C5) and 2 black keys.
-	-	Press C3 Sharp to start and reset the indicator position
-	-	Press F3 Sharp TWICE to clear the display and reset the indicator position
+	-	Press the SPACEBAR start and reset the indicator position.
+	-	Press the letter 'R' or 'r' TWICE to clear the display and reset the indicator position.
 
 ## License
 
